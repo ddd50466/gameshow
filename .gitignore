@@ -1,0 +1,15 @@
+# 依赖与构建产物
+node_modules/
+dist/
+
+# 本地数据与上传文件（不上传云端仓库）
+data/
+uploads/
+
+# 环境变量
+.env
+.env.local
+
+# 日志
+*.log
+logs/
