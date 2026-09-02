@@ -37,9 +37,10 @@ async function main() {
     const reg = await j('POST', '/auth/register', user);
     const token = reg.token;
     log('注册', !!token, `用户:${user.username}`);
-    // 2 登录
+    // 2 登录（验证登录 token 可访问受保护接口）
     const lg = await j('POST', '/auth/login', { username: user.username, password: user.password });
-    log('登录', lg.token === token);
+    const me = await j('GET', '/auth/me', undefined, lg.token);
+    log('登录', !!lg.token && me.username === user.username);
 
     // 3 上传图片
     const fd = new FormData();
