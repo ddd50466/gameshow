@@ -53,7 +53,8 @@ async function main() {
     const upData = await upRes.json();
     if (!upRes.ok) throw new Error('上传失败 ' + upData.message);
     const coverUrl = upData.data.url;
-    log('上传图片', coverUrl.startsWith('/uploads/'), coverUrl);
+    const urlOk = coverUrl.startsWith('/uploads/') || coverUrl.startsWith('http');
+    log('上传图片', urlOk, coverUrl);
 
     // 4 创建作品
     const work = await j(

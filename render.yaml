@@ -18,14 +18,10 @@ services:
         sync: false
       - key: CLOUDFLARE_API_TOKEN
         sync: false
-      # Backblaze B2 图片存储
-      - key: B2_ENDPOINT
+      # Supabase Storage 图片存储
+      - key: SUPA_PROJECT_URL
         sync: false
-      - key: B2_ACCESS_KEY_ID
+      - key: SUPA_SECRET_KEY
         sync: false
-      - key: B2_SECRET_ACCESS_KEY
-        sync: false
-      - key: B2_BUCKET
-        sync: false
-      - key: B2_PUBLIC_URL
+      - key: SUPA_BUCKET
         sync: false
