@@ -1,7 +1,8 @@
 // 清理测试数据：删除所有 test_ 前缀的测试账号及其作品
-const { all, run } = require('../server/db');
+const { init, all, run } = require('../server/db');
 
 async function main() {
+  await init();
   const rows = await all("SELECT id, username FROM users WHERE username LIKE 'test_%' OR username = '小明同学'");
   for (const u of rows) {
     await run('DELETE FROM works WHERE author_id = ?', u.id);
