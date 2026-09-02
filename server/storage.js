@@ -12,9 +12,16 @@ const CLOUD = Boolean(
 );
 
 const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 function getUploadDir() {
+  // 仅在需要写入本地目录时创建（本地模式）；云端/serverless 只读环境不创建
+  if (!fs.existsSync(uploadDir)) {
+    try {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    } catch (e) {
+      /* 只读环境忽略 */
+    }
+  }
   return uploadDir;
 }
 
