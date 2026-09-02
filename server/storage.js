@@ -22,6 +22,34 @@ function isCloud() {
   return CLOUD;
 }
 
+// 根据内存 buffer 上传（serverless 环境无持久磁盘时使用）
+// 云端模式：直接上传到 Supabase Storage；本地模式：写入本地 uploads 目录
+async function publishBuffer(buffer, filename, contentType) {
+  if (CLOUD) {
+    const projectUrl = String(process.env.SUPA_PROJECT_URL).replace(/\/$/, '');
+    const bucket = process.env.SUPA_BUCKET;
+    const res = await fetch(`${projectUrl}/storage/v1/object/${bucket}/${filename}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.SUPA_SECRET_KEY}`,
+        'Content-Type': contentType || 'application/octet-stream',
+        'x-upsert': 'true',
+      },
+      body: buffer,
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw new Error(`上传到云端失败: ${res.status} ${txt.slice(0, 200)}`);
+    }
+    return `${projectUrl}/storage/v1/object/public/${bucket}/${filename}`;
+  }
+  // 本地模式：写入本地 uploads 目录
+  const dir = getUploadDir();
+  const fp = path.join(dir, filename);
+  fs.writeFileSync(fp, buffer);
+  return `/uploads/${filename}`;
+}
+
 // 根据本地临时文件，返回对外可访问的 URL
 // 云端模式：上传到 Supabase Storage 并删除本地临时文件；本地模式：保留本地文件
 async function publishFile(localFilePath, filename, contentType) {
@@ -53,4 +81,4 @@ async function publishFile(localFilePath, filename, contentType) {
   return `/uploads/${filename}`;
 }
 
-module.exports = { getUploadDir, publishFile, isCloud };
+module.exports = { getUploadDir, publishFile, publishBuffer, isCloud };

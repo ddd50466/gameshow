@@ -2,11 +2,10 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const crypto = require('crypto');
 const { all, get, run, uuid } = require('../db');
 const { authRequired } = require('../auth');
-const { getUploadDir, publishFile } = require('../storage');
+const { publishBuffer } = require('../storage');
 
 const router = express.Router();
 
@@ -40,14 +39,8 @@ function toWork(row) {
   };
 }
 
-// ---- 文件上传（先落本地临时目录，再由 storage 决定去云或保留）----
-const storage = multer.diskStorage({
-  destination: getUploadDir(),
-  filename: (req, file, cb) => {
-    const ext = (path.extname(file.originalname || '') || '').toLowerCase().slice(0, 12) || '.bin';
-    cb(null, `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`);
-  },
-});
+// ---- 文件上传（内存缓冲，由 storage 决定去云或落地）----
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: { fileSize: 300 * 1024 * 1024 }, // 图片视频上限 300MB
@@ -105,14 +98,11 @@ router.get('/', async (req, res) => {
 router.post('/upload', authRequired, upload.single('file'), async (req, res, next) => {
   if (!req.file) return res.status(400).json({ success: false, message: '未收到文件' });
   try {
-    const url = await publishFile(req.file.path, req.file.filename, req.file.mimetype);
+    const ext = (path.extname(req.file.originalname || '') || '').toLowerCase().slice(0, 12) || '.bin';
+    const filename = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
+    const url = await publishBuffer(req.file.buffer, filename, req.file.mimetype);
     res.json({ success: true, data: { url } });
   } catch (e) {
-    try {
-      fs.unlinkSync(req.file.path);
-    } catch (err) {
-      /* 忽略 */
-    }
     next(e);
   }
 });
